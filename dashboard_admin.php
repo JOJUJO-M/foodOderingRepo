@@ -31,8 +31,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                         class="fas fa-hamburger"></i> Menu Items</a>
                 <a href="javascript:void(0)" class="nav-link" onclick="switchTab('reports', this)"><i
                         class="fas fa-chart-line"></i> Sales Report</a>
-                <a href="javascript:void(0)" class="nav-link" onclick="showUserModal()"><i class="fas fa-user-plus"></i>
-                    Register User</a>
+                <a href="javascript:void(0)" class="nav-link" onclick="switchTab('users', this)"><i
+                        class="fas fa-users-cog"></i> Manage Users</a>
                 <a href="javascript:void(0)" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i>
                     Logout</a>
             </nav>
@@ -62,6 +62,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 <p class="text-muted">View daily sales and revenue</p>
             </div>
 
+            <div id="header-users" class="mb-4" style="display:none;">
+                <div class="flex-between">
+                    <div>
+                        <h1>User Management</h1>
+                        <p class="text-muted">Register and manage riders/admins</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showUserModal()">
+                        <i class="fas fa-user-plus"></i> Register New User
+                    </button>
+                </div>
+            </div>
+
             <!-- Content Areas -->
             <div id="view-orders">
                 <div id="orders-list">
@@ -86,6 +98,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                     </div>
                 </div>
                 <div id="report-results"></div>
+            </div>
+
+            <div id="view-users" style="display:none;">
+                <div class="card p-0 overflow-hidden">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <thead style="background: rgba(0,0,0,0.05); text-align: left;">
+                            <tr>
+                                <th style="padding: 15px;">Name</th>
+                                <th style="padding: 15px;">Email</th>
+                                <th style="padding: 15px;">Role</th>
+                                <th style="padding: 15px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
     </div>
@@ -156,25 +186,39 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         </div>
     </div>
 
-    <!-- Edit Price Modal -->
-    <div id="edit-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-        <div class="glass-panel" style="max-width:400px; text-align:left;">
-            <h3>Edit Price</h3>
-            <input type="hidden" id="edit-id">
-            <input type="hidden" id="edit-name">
-            <div class="form-group">
-                <label>Item Name</label>
-                <input type="text" id="edit-item-name" class="form-control" disabled style="background:#f0f0f0;">
-            </div>
-            <div class="form-group">
-                <label>New Price </label>
-                <input type="number" id="edit-price" step="0.01" class="form-control" min="0">
-            </div>
-            <div class="flex-between mt-4">
-                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="submitEdit()">Update Price</button>
-            </div>
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
+        <div class="glass-panel" style="max-width:480px; text-align:left; width:100%;">
+            <h3 class="mb-4"><i class="fas fa-user-edit"></i> Edit User</h3>
+            <form id="edit-user-form" onsubmit="handleEditUser(event)">
+                <input type="hidden" name="id" id="edit-user-id">
+                <div class="form-group">
+                    <label><strong>Full Name</strong></label>
+                    <input type="text" name="name" id="edit-user-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label><strong>Email</strong></label>
+                    <input type="email" name="email" id="edit-user-email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label><strong>New Password</strong></label>
+                    <input type="password" name="password" id="edit-user-password" class="form-control"
+                        placeholder="Leave blank to keep current">
+                </div>
+                <div class="form-group">
+                    <label><strong>Role</strong></label>
+                    <select name="role" id="edit-user-role" class="form-control">
+                        <option value="customer">Customer</option>
+                        <option value="rider">Rider</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="flex-between mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -182,10 +226,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     <script>
         // State
         let riders = [];
+        let allUsers = [];
 
         // Init
-        loadOrders();
-        loadRiders();
+        // Load riders first, then orders to ensure dropdowns are populated
+        loadRiders().then(() => {
+            loadOrders();
+        });
 
         function switchTab(tab, el) {
             console.log('[TABS] Switching to tab:', tab);
@@ -202,13 +249,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             }
 
             // Hide all headers
-            ['header-orders', 'header-products', 'header-reports'].forEach(id => {
+            ['header-orders', 'header-products', 'header-reports', 'header-users'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
 
             // Hide all views
-            ['view-orders', 'view-products', 'view-reports'].forEach(id => {
+            ['view-orders', 'view-products', 'view-reports', 'view-users'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
@@ -234,6 +281,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 const reportDate = document.getElementById('report-date');
                 if (reportDate) reportDate.valueAsDate = new Date();
                 loadReport();
+            } else if (tab === 'users') {
+                const headerUsers = document.getElementById('header-users');
+                const viewUsers = document.getElementById('view-users');
+                if (headerUsers) headerUsers.style.display = 'block';
+                if (viewUsers) viewUsers.style.display = 'block';
+                loadUsers();
             }
 
             console.log('[TABS] Tab switch complete');
@@ -536,13 +589,84 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 if (res.success) {
                     alert('User created successfully');
                     closeUserModal();
+                    if (document.getElementById('view-users').style.display !== 'none') {
+                        loadUsers();
+                    }
                     loadRiders();
                 }
             } catch (err) {
                 // apiCall shows alerts for errors
             }
         }
-    </script>
-</body>
 
-</html>
+        async function loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Loading users...</td></tr>';
+
+            try {
+                allUsers = await apiCall('api/data.php?type=users');
+                tbody.innerHTML = allUsers.map(u => `
+                    <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                        <td style="padding: 15px;">${u.name}</td>
+                        <td style="padding: 15px;">${u.email}</td>
+                        <td style="padding: 15px;"><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
+                        <td style="padding: 15px;">
+                            <button class="btn btn-secondary btn-sm" onclick="openEditUserById(${u.id})"><i class="fas fa-edit"></i> Edit</button>
+                            ${u.id != currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i> Delete</button>` : ''
+                    }
+                        </td >
+                    </tr >
+                `).join('');
+                if (allUsers.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No users found.</td></tr>';
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-danger">Failed to load users.</td></tr>';
+            }
+        }
+
+        function openEditUserById(id) {
+            const user = allUsers.find(u => u.id == id);
+            if (!user) return;
+            document.getElementById('edit-user-id').value = user.id;
+            document.getElementById('edit-user-name').value = user.name;
+            document.getElementById('edit-user-email').value = user.email;
+            document.getElementById('edit-user-role').value = user.role;
+            document.getElementById('edit-user-password').value = '';
+            document.getElementById('edit-user-modal').style.display = 'flex';
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('edit-user-modal').style.display = 'none';
+        }
+
+        async function handleEditUser(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-user-id').value;
+            const name = document.getElementById('edit-user-name').value;
+            const email = document.getElementById('edit-user-email').value;
+            const role = document.getElementById('edit-user-role').value;
+            const password = document.getElementById('edit-user-password').value;
+
+            try {
+                const res = await apiCall('api/data.php?type=update_user', 'POST', { id, name, email, role, password });
+                if (res.success) {
+                    alert('User updated successfully');
+                    closeEditUserModal();
+                    loadUsers();
+                    loadRiders();
+                }
+            } catch (err) { }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Are you sure you want to delete this user?')) return;
+            try {
+                const res = await apiCall('api/data.php?type=delete_user', 'POST', { id });
+                if (res.success) {
+                    alert('User deleted successfully');
+                    loadUsers();
+                    loadRiders();
+                }
+            } catch (err) { }
+        }
+    </script>
+    </bo

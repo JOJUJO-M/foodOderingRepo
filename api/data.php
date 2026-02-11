@@ -84,6 +84,13 @@ if ($method === 'GET') {
         ob_clean();
         echo json_encode($stmt->fetchAll());
     }
+    elseif ($type === 'users') {
+        if ($_SESSION['role'] !== 'admin')
+            die(json_encode(['error' => 'Unauthorized']));
+        $stmt = $pdo->query("SELECT id, name, email, role FROM users ORDER BY role, name");
+        ob_clean();
+        echo json_encode($stmt->fetchAll());
+    }
     elseif ($type === 'delivery_report') {
         // For riders to see their delivery summary
         if ($_SESSION['role'] !== 'rider')
@@ -260,12 +267,40 @@ elseif ($method === 'POST') {
     elseif ($type === 'orders') {
         // Place Order
         // ... (existing code for orders) ...
-        $items = $data['items'];
-        $total = $data['total'];
-        $address = $data['address']; // Simple address field
+        if (!is_array($data)) {
+            http_response_code(400);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+            exit;
+        }
+
+        $items = $data['items'] ?? [];
+        $total = $data['total'] ?? 0;
+        $address = $data['address'] ?? '';
+
+        if (empty($items) || !is_array($items)) {
+            http_response_code(400);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Cart is empty or invalid']);
+            exit;
+        }
+
+        if (empty($address)) {
+            http_response_code(400);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Delivery address is required']);
+            exit;
+        }
 
         $pdo->beginTransaction();
         try {
+            // Verify items exist
+            foreach ($items as $item) {
+                if (!isset($item['id']) || !isset($item['quantity']) || !isset($item['price'])) {
+                    throw new Exception("Invalid item data in cart");
+                }
+            }
+
             $stmt = $pdo->prepare("INSERT INTO orders (customer_id, total_price, delivery_address) VALUES (?, ?, ?)");
             $stmt->execute([$_SESSION['user_id'], $total, $address]);
             $orderId = $pdo->lastInsertId();
@@ -507,10 +542,10 @@ elseif ($method === 'POST') {
         $password = $data['password'] ?? '';
         $role = $data['role'] ?? '';
 
-        if (!$name || !$email || !$password || !in_array($role, ['admin', 'rider'])) {
+        if (!$name || !$email || !$password || !$role) {
             http_response_code(400);
             ob_clean();
-            echo json_encode(['success' => false, 'message' => 'Name, email, password and valid role (admin|rider) are required']);
+            echo json_encode(['success' => false, 'message' => 'Name, email, password and role are required']);
             exit;
         }
 
@@ -536,6 +571,64 @@ elseif ($method === 'POST') {
             http_response_code(500);
             ob_clean();
             echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        }
+    }
+    elseif ($type === 'update_user' && $_SESSION['role'] === 'admin') {
+        $id = $data['id'];
+        $name = trim($data['name'] ?? '');
+        $email = trim($data['email'] ?? '');
+        $role = $data['role'] ?? '';
+        $password = $data['password'] ?? '';
+
+        if (!$id || !$name || !$email || !$role) {
+            http_response_code(400);
+            ob_clean();
+            die(json_encode(['success' => false, 'message' => 'Missing required fields']));
+        }
+
+        try {
+            if (!empty($password)) {
+                $hashed = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ?, password = ? WHERE id = ?");
+                $stmt->execute([$name, $email, $role, $hashed, $id]);
+            }
+            else {
+                $stmt = $pdo->prepare("UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?");
+                $stmt->execute([$name, $email, $role, $id]);
+            }
+            ob_clean();
+            echo json_encode(['success' => true]);
+        }
+        catch (PDOException $e) {
+            http_response_code(500);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+    elseif ($type === 'delete_user' && $_SESSION['role'] === 'admin') {
+        $id = $data['id'];
+        if (!$id) {
+            http_response_code(400);
+            ob_clean();
+            die(json_encode(['success' => false, 'message' => 'ID required']));
+        }
+
+        if ($id == $_SESSION['user_id']) {
+            http_response_code(403);
+            ob_clean();
+            die(json_encode(['success' => false, 'message' => 'Cannot delete yourself']));
+        }
+
+        try {
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+            $stmt->execute([$id]);
+            ob_clean();
+            echo json_encode(['success' => true]);
+        }
+        catch (PDOException $e) {
+            http_response_code(500);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 }

@@ -59,9 +59,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                 <i class="fas fa-utensils"></i> Misosi Kiganjani
             </a>
             <nav>
-                <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('menu')"><i
+                <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('menu', this)"><i
                         class="fas fa-book-open"></i> Browse Menu</a>
-                <a href="javascript:void(0)" class="nav-link" onclick="switchTab('orders')"><i class="fas fa-clock"></i>
+                <a href="javascript:void(0)" class="nav-link" onclick="switchTab('orders', this)"><i
+                        class="fas fa-clock"></i>
                     My Orders</a>
                 <a href="javascript:void(0)" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i>
                     Logout</a>
@@ -112,8 +113,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                 <h3 id="cart-total">Tsh 0.00</h3>
             </div>
             <div class="form-group">
-                <input type="text" id="delivery-address" class="form-control" placeholder="Device Delivery Address"
-                    required>
+                <input type="text" id="delivery-address" class="form-control" placeholder="Delivery Address" required>
             </div>
             <button class="btn btn-primary btn-block" onclick="checkout()">Place Order</button>
         </div>
@@ -128,9 +128,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
         loadMenu();
         loadOrders();
 
-        function switchTab(tab) {
+        function switchTab(tab, element) {
+            // Remove active class from all links
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            event.target.closest('.nav-link').classList.add('active');
+
+            // Add active class to clicked element or find by tab name
+            if (element) {
+                element.classList.add('active');
+            } else {
+                // Find link by onclick attribute content if element is not provided (programmatic call)
+                const link = document.querySelector(`.nav-link[onclick*="'${tab}'"]`);
+                if (link) link.classList.add('active');
+            }
 
             if (tab === 'orders') {
                 document.getElementById('view-menu').style.display = 'none';
@@ -165,13 +174,22 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
         }
 
         function addToCart(id) {
-            const product = products.find(p => p.id === id);
-            const existing = cart.find(item => item.id === id);
+            // Use loose comparison (==) to handle potential string/number mismatch
+            const product = products.find(p => p.id == id);
+
+            if (!product) {
+                console.error('Product not found for ID:', id);
+                return;
+            }
+
+            const existing = cart.find(item => item.id == id);
 
             if (existing) {
                 existing.quantity++;
             } else {
-                cart.push({ ...product, quantity: 1 });
+                // Ensure price is a number
+                const price = parseFloat(product.price);
+                cart.push({ ...product, price: price, quantity: 1 });
             }
             updateCartUI();
             toggleCart(true);
@@ -245,7 +263,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                 toggleCart();
                 switchTab('orders');
                 loadOrders();
-            } catch (e) { }
+            } catch (e) {
+                alert('Order failed: ' + e.message);
+                console.error(e);
+            }
         }
 
         async function loadOrders() {
@@ -261,7 +282,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                                 <p class="text-muted mt-2">${order.created_at}</p>
                             </div>
                             <div class="text-right">
-                                <h3>${formatCurrency(order.total_price)}</h3>
+                     <h3>${formatCurrency(order.total_price)}</h3>
                             </div>
                          </div>
                     </div>

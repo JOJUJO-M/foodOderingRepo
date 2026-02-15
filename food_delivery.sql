@@ -1,13 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.0.1
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 05, 2026 at 10:44 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Generation Time: Feb 13, 2026 at 01:27 PM
+-- Server version: 10.4.11-MariaDB
+-- PHP Version: 7.4.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -30,7 +31,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `categories` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -46,16 +47,19 @@ CREATE TABLE `orders` (
   `total_price` decimal(10,2) NOT NULL,
   `delivery_address` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `orders`
 --
 
 INSERT INTO `orders` (`id`, `customer_id`, `rider_id`, `status`, `total_price`, `delivery_address`, `created_at`) VALUES
-(1, 4, 6, 'delivered', 62000.00, 'Bahari beach 0687786648', '2026-02-05 08:36:18'),
-(2, 5, 3, 'delivered', 2000.00, 'Mbezi One 071425648', '2026-02-05 08:50:05'),
-(3, 4, 3, 'delivered', 30000.00, 'Bahari beach 0687786648', '2026-02-05 09:02:53');
+(1, 2, 3, 'picked_up', '18000.00', 'kimara', '2026-02-13 10:34:03'),
+(2, 2, 3, 'delivered', '16000.00', 'kimara', '2026-02-13 10:34:18'),
+(3, 2, NULL, 'pending', '18000.00', 'kimara', '2026-02-13 10:41:50'),
+(4, 2, NULL, 'pending', '17000.00', 'kimara', '2026-02-13 10:42:18'),
+(5, 2, 3, 'picked_up', '15000.00', 'kimara', '2026-02-13 11:07:59'),
+(6, 2, NULL, 'rejected', '16000.00', 'kimara', '2026-02-13 12:05:01');
 
 -- --------------------------------------------------------
 
@@ -69,17 +73,19 @@ CREATE TABLE `order_items` (
   `product_id` int(11) NOT NULL,
   `quantity` int(11) NOT NULL,
   `price` decimal(10,2) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `order_items`
 --
 
 INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `quantity`, `price`) VALUES
-(1, 1, 2, 2, 30000.00),
-(2, 1, 1, 1, 2000.00),
-(3, 2, 1, 1, 2000.00),
-(4, 3, 2, 1, 30000.00);
+(1, 1, 3, 1, '18000.00'),
+(2, 2, 6, 1, '16000.00'),
+(3, 3, 3, 1, '18000.00'),
+(4, 4, 7, 1, '17000.00'),
+(5, 5, 2, 1, '15000.00'),
+(6, 6, 6, 1, '16000.00');
 
 -- --------------------------------------------------------
 
@@ -94,15 +100,18 @@ CREATE TABLE `products` (
   `price` decimal(10,2) NOT NULL,
   `image` varchar(255) DEFAULT NULL,
   `category_id` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `products`
 --
 
 INSERT INTO `products` (`id`, `name`, `description`, `price`, `image`, `category_id`) VALUES
-(1, 'Wali Maharage V.I.P', 'Wali maharage na Nazi', 2000.00, 'assets/uploads/698455b3e5abe_wali maharage.png', NULL),
-(2, 'Chips Samaki', 'Spice chips with Fried Fish', 30000.00, 'assets/uploads/698455ef15f55_WhatsApp Image 2026-01-16 at 19.36.31.jpeg', NULL);
+(1, 'Nigerian Jollof Rice', 'Smoky, spicy rice cooked in a rich tomato and pepper base, served with fried plantain.', '12000.00', 'https://images.unsplash.com/photo-1627308595229-7830a5c91f9f?auto=format&fit=crop&w=400&q=80', NULL),
+(2, 'Ugali na Nyama Choma', 'Traditional East African maize meal stiff porridge served with succulent grilled goat meat.', '15000.00', 'https://images.unsplash.com/photo-1604329760661-e71dc83f8f26?auto=format&fit=crop&w=400&q=80', NULL),
+(3, 'Injera with Doro Wat', 'Ethiopian sourdough flatbread accompanied by a spicy chicken stew and hard-boiled eggs.', '18000.00', 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=400&q=80', NULL),
+(6, 'South African Bobotie', 'Deliciously spiced minced meat baked with a creamy egg-based topping and yellow rice.', '16000.00', 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', NULL),
+(7, 'Cameroonian Ndole', 'Traditional bitter leaf and nut stew cooked with shrimp, beef, and served with plantains.', '17000.00', 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=400&q=80', NULL);
 
 -- --------------------------------------------------------
 
@@ -117,20 +126,16 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `role` enum('customer','admin','rider') NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `created_at`) VALUES
-(1, 'Admin User', 'admin@food.com', '$2y$10$/TGho1q.OIg8K/9alwthReT5mi0j25shjl.VsxueLYAGURPKxBhbK', 'admin', '2026-02-05 08:02:42'),
-(2, 'IQRA daudi', 'iqra@gmail.com', '123456', 'customer', '2026-02-05 08:26:23'),
-(3, 'Faridi Mkilwa', 'rider@gmail.com', '$2y$10$ey2dzmDVb0Y8FRCuO/aYTe.lXM/PTQbIHGpzJZLPWmoKDKGQ3uqAe', 'rider', '2026-02-05 08:34:20'),
-(4, 'Nasha Mkilwa', 'customer@gmail.com', '123456', 'customer', '2026-02-05 08:34:44'),
-(5, 'Iqra Daudi', 'customer1@gmail.com', '123456', 'customer', '2026-02-05 08:35:02'),
-(6, 'Twaha Mkilwa', 'rider1@gmail.com', '123456', 'rider', '2026-02-05 08:35:43'),
-(7, 'Daudi mkilwa', 'daudimkilwa@gmail.com', '$2y$10$MwU0aKwwvbjby2Hwx2eCRee9gZ3lZ02fNkfDyK.qN8k.J3aNrG0Jy', 'admin', '2026-02-05 09:14:25');
+(1, 'Admin User', 'admin@food.com', '$2y$10$hw88j0LlhTWQplrgybfQ0.HO.gRi6/E9g86M36R3TZQ6cdSTSs3mW', 'admin', '2026-02-13 08:00:58'),
+(2, 'Aman', 'aman@food.com', '$2y$10$Qwn0sNzum7BkAmkIjuoafehf/jSiEzFNKCkvASE4MDf7Hywidyqe2', 'customer', '2026-02-13 10:33:25'),
+(3, 'greg', 'greg@food.com', '$2y$10$uiYNYm32futHAT1RAwaFSO6pEeqsrzHssw1Cp3M53SEryy4wQDxFq', 'rider', '2026-02-13 10:35:26');
 
 --
 -- Indexes for dumped tables
@@ -187,25 +192,25 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables

@@ -21,8 +21,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="index.php" class="brand" style="text-decoration: none;">
-                <i class="fas fa-utensils"></i> Misosi Admin
+            <a href="index.php" class="brand"
+                style="text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; margin-bottom: 10px;">
+                <div style="display: flex; flex-direction: column; text-align: center;">
+                    <span style="font-size: 24px; font-weight: 700; color: white; letter-spacing: 1px;">MISOSI</span>
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500;">Admin Panel</span>
+                </div>
             </a>
             <nav>
                 <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('orders', this)"><i
@@ -41,13 +45,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
         <!-- Main Content -->
         <main class="main-content">
             <!-- Headers -->
-            <div id="header-orders" class="mb-4">
+            <div id="header-orders" class="mb-4" style="text-align: center;">
                 <h1>Incoming Orders</h1>
                 <p class="text-muted">Manage and assign orders to riders</p>
             </div>
             <div id="header-products" class="mb-4" style="display:none;">
                 <div class="flex-between">
-                    <div>
+                    <div style="text-align: center; flex: 1;">
                         <h1>Menu Management</h1>
                         <p class="text-muted">Add or remove food items</p>
                     </div>
@@ -57,14 +61,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 </div>
             </div>
 
-            <div id="header-reports" class="mb-4" style="display:none;">
+            <div id="header-reports" class="mb-4" style="display:none; text-align: center;">
                 <h1>Sales Report</h1>
                 <p class="text-muted">View daily sales and revenue</p>
             </div>
 
             <div id="header-users" class="mb-4" style="display:none;">
                 <div class="flex-between">
-                    <div>
+                    <div style="text-align: center; flex: 1;">
                         <h1>User Management</h1>
                         <p class="text-muted">Register and manage riders/admins</p>
                     </div>
@@ -604,7 +608,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Loading users...</td></tr>';
 
             try {
+                console.log('[ADMIN] Loading users...');
                 allUsers = await apiCall('api/data.php?type=users');
+                console.log('[ADMIN] Users loaded:', allUsers);
                 tbody.innerHTML = allUsers.map(u => `
                     <tr style="border-bottom: 1px solid rgba(0,0,0,0.05);">
                         <td style="padding: 15px;">${u.name}</td>
@@ -612,14 +618,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                         <td style="padding: 15px;"><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
                         <td style="padding: 15px;">
                             <button class="btn btn-secondary btn-sm" onclick="openEditUserById(${u.id})"><i class="fas fa-edit"></i> Edit</button>
-                            ${u.id != currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i> Delete</button>` : ''
-                    }
-                        </td >
-                    </tr >
+                            ${u.id != currentUserId ? `<button class="btn btn-danger btn-sm" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i> Delete</button>` : ''}
+                        </td>
+                    </tr>
                 `).join('');
                 if (allUsers.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No users found.</td></tr>';
             } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-danger">Failed to load users.</td></tr>';
+                console.error('[ADMIN] Error loading users:', e);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-danger">Failed to load users: ' + e.message + '</td></tr>';
             }
         }
 
@@ -667,6 +673,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                     loadRiders();
                 }
             } catch (err) { }
+
         }
     </script>
-    </bo
+</body>
+</html>

@@ -20,8 +20,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'rider') {
     <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="index.php" class="brand" style="text-decoration: none;">
-                <i class="fas fa-motorcycle"></i> Misosi Rider
+            <a href="index.php" class="brand"
+                style="text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 12px; margin-bottom: 10px;">
+                <div style="display: flex; flex-direction: column; text-align: center;">
+                    <span style="font-size: 24px; font-weight: 700; color: white; letter-spacing: 1px;">MISOSI</span>
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500;">Rider
+                        Dashboard</span>
+                </div>
             </a>
             <nav>
                 <a href="javascript:void(0)" class="nav-link active"><i class="fas fa-clipboard-list"></i> My Tasks</a>
@@ -32,7 +37,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'rider') {
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="mb-4">
+            <div class="mb-4" style="text-align: center;">
                 <h1>🚗 Active Deliveries</h1>
                 <p class="text-muted">Manage your assigned orders</p>
             </div>

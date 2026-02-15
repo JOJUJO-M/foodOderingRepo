@@ -5,8 +5,8 @@ error_reporting(0);
 // Database Configuration
 $host = 'localhost';
 $dbname = 'food_delivery';
-$username = 'root';
-$password = '';
+$username = 'fooduser';
+$password = 'Jojujo@2020*()';
 
 try {
     // First connect to MySQL server to ensure DB exists
@@ -85,3 +85,4 @@ try {
     // Fallback for non-API context
     $db_error = $e->getMessage();
 }
+

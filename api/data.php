@@ -22,7 +22,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 $type = $_GET['type'] ?? '';
 
 if ($method === 'GET' && $type === 'products') {
-    $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
+    $stmt = $pdo->query("SELECT * FROM products WHERE is_active = 1 ORDER BY id DESC");
     $result = $stmt->fetchAll();
     if (ob_get_length())
         ob_clean();
@@ -40,7 +40,7 @@ if (!isset($_SESSION['user_id'])) {
 
 if ($method === 'GET') {
     if ($type === 'products') {
-        $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
+        $stmt = $pdo->query("SELECT * FROM products WHERE is_active = 1 ORDER BY id DESC");
         $result = $stmt->fetchAll();
         if (ob_get_length())
             ob_clean();
@@ -213,7 +213,7 @@ elseif ($method === 'POST') {
 
         try {
             $id = intval($data['id']);
-            $stmt = $pdo->prepare("DELETE FROM products WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE products SET is_active = 0 WHERE id = ?");
             $stmt->execute([$id]);
 
             if ($stmt->rowCount() > 0) {

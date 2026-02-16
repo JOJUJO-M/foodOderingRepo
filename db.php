@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 
 // Database Configuration
 $host = 'localhost';
-$dbname = 'food_ordering';
+$dbname = 'food_delivery';
 $username = 'fooduser';
 $password = 'Jojujo@2020*()';
 
@@ -87,4 +87,5 @@ catch (PDOException $e) {
     // Fallback for non-API context
     $db_error = $e->getMessage();
 }
+
 

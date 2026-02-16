@@ -6,8 +6,8 @@ ini_set('display_errors', 1);
 // Database Configuration
 $host = 'localhost';
 $dbname = 'food_ordering';
-$username = 'root';
-$password = '';
+$username = 'fooduser';
+$password = 'Jojujo@2020*()';
 
 try {
     // First connect to MySQL server to ensure DB exists
@@ -87,3 +87,4 @@ catch (PDOException $e) {
     // Fallback for non-API context
     $db_error = $e->getMessage();
 }
+

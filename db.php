@@ -87,5 +87,3 @@ catch (PDOException $e) {
     // Fallback for non-API context
     $db_error = $e->getMessage();
 }
-
-

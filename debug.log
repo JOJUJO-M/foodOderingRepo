@@ -204,3 +204,15 @@
 [2026-02-16 12:55:44] API Call: /food_ordering/api/data.php?type=orders Session: {"user_id":"1","role":"admin","name":"Admin User"}
 [2026-02-16 12:55:49] API Call: /food_ordering/api/data.php?type=sales_report Session: {"user_id":"1","role":"admin","name":"Admin User"}
 [2026-02-16 12:56:21] API Call: /food_ordering/api/data.php?type=users Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:13:29] API Call: /food_ordering/api/data.php?type=riders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:13:30] API Call: /food_ordering/api/data.php?type=orders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:20:17] API Call: /food_ordering/api/data.php?type=riders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:20:17] API Call: /food_ordering/api/data.php?type=orders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:20:19] API Call: /food_ordering/api/data.php?type=users Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:26:05] API Call: /food_ordering/api/data.php?type=riders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:26:07] API Call: /food_ordering/api/data.php?type=orders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:26:09] API Call: /food_ordering/api/data.php?type=users Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:40:23] API Call: /food_ordering/api/data.php?type=orders Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:40:25] API Call: /food_ordering/api/data.php?type=products Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:40:27] API Call: /food_ordering/api/data.php?type=sales_report Session: {"user_id":"1","role":"admin","name":"Admin User"}
+[2026-02-16 14:40:29] API Call: /food_ordering/api/data.php?type=users Session: {"user_id":"1","role":"admin","name":"Admin User"}

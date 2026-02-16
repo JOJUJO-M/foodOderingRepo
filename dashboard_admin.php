@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>jjj</title>
+    <title>Admin Dashboard</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -225,10 +225,29 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             </form>
         </div>
     </div>
+    
+    <!-- Edit Product Modal -->
+    <div id="edit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; overflow-y:auto; padding:20px;">
+        <div class="glass-panel" style="max-width:480px; text-align:left; width:100%;">
+            <h3 class="mb-4"><i class="fas fa-edit"></i> Edit Product Price</h3>
+            <p id="edit-item-name" style="font-weight: bold; margin-bottom: 20px; color: var(--primary);"></p>
+            <input type="hidden" id="edit-id">
+            <input type="hidden" id="edit-name">
+            <div class="form-group">
+                <label><strong>New Price (Tsh)</strong></label>
+                <input type="number" step="0.01" id="edit-price" class="form-control" placeholder="0.00" required>
+            </div>
+            <div class="flex-between mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitEdit()"><i class="fas fa-save"></i> Update Price</button>
+            </div>
+        </div>
+    </div>
 
     <script src="assets/js/main.js"></script>
     <script>
         // State
+        const currentUserId = <?php echo $_SESSION['user_id']; ?>;
         let riders = [];
         let allUsers = [];
 
@@ -678,4 +697,3 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     </script>
 </body>
 </html>
-

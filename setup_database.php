@@ -9,7 +9,7 @@
 $host = 'localhost';
 $user = 'root';
 $password = '';
-$database = 'food_delivery';
+$database = 'food_ordering';
 
 echo "=== Food Delivery Database Setup ===\n\n";
 
@@ -23,7 +23,7 @@ if ($connection->connect_error) {
 echo "[✓] Connected to MySQL server\n";
 
 // Read the SQL file
-$sqlFile = __DIR__ . '/food_delivery.sql';
+$sqlFile = __DIR__ . '/food_ordering.sql';
 
 if (!file_exists($sqlFile)) {
     die("[✗] SQL file not found: $sqlFile\n");

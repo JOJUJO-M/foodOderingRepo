@@ -48,6 +48,16 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
             border-bottom: 1px solid #EEE;
             padding-bottom: 10px;
         }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 0.3s ease-out;
+        }
     </style>
 </head>
 
@@ -61,9 +71,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
             <nav>
                 <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('menu', this)"><i
                         class="fas fa-book-open"></i> Browse Menu</a>
-                <a href="javascript:void(0)" class="nav-link" onclick="switchTab('orders', this)"><i
-                        class="fas fa-clock"></i>
-                    My Orders</a>
+                <a href="javascript:void(0)" class="nav-link" onclick="switchTab('orders', this)">
+                    <i class="fas fa-clock"></i> My Orders 
+                    <span id="orders-count-badge" class="badge" style="background: var(--primary-light); color: var(--primary); font-size: 0.7rem; padding: 2px 8px; margin-left: auto; display: none;">0</span>
+                </a>
                 <a href="javascript:void(0)" class="nav-link" onclick="logout()"><i class="fas fa-sign-out-alt"></i>
                     Logout</a>
             </nav>
@@ -71,24 +82,24 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="flex-between mb-4">
-                <h1>Delicious Menu</h1>
-                <button class="btn btn-primary" onclick="toggleCart()">
+            <div class="mb-5" style="position: relative; display: flex; justify-content: center; align-items: center; min-height: 60px;">
+                <h1 id="view-title" style="margin-bottom: 0; text-align: center;">Delicious Menu</h1>
+                <button id="cart-btn" class="btn btn-primary" onclick="toggleCart()" style="position: absolute; right: 0;">
                     <i class="fas fa-shopping-cart"></i> Cart <span id="cart-count" class="badge badge-pending"
-                        style="background: white; color: var(--primary);">0</span>
+                        style="background: white; color: var(--primary); margin-left: 5px;">0</span>
                 </button>
             </div>
 
             <div id="view-menu">
                 <div id="menu-grid" class="menu-grid">
-                    <!-- Loaded via JS -->
+                    <p class="text-muted text-center" style="grid-column: 1/-1;">Loading menu items...</p>
                 </div>
             </div>
 
             <div id="view-orders" style="display:none;">
                 <h2>Order History</h2>
                 <div id="orders-list">
-                    <!-- Loaded via JS -->
+                    <p class="text-muted">Loading your orders...</p>
                 </div>
             </div>
         </main>
@@ -119,14 +130,23 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
         </div>
     </div>
 
-    <script src="assets/js/main.js"></script>
+    <script src="assets/js/main.js?v=<?php echo time(); ?>"></script>
     <script>
+        // Initial states
         let cart = [];
         let products = [];
 
         // Init
-        loadMenu();
-        loadOrders();
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof cart_get === 'function') {
+                cart = cart_get();
+            } else {
+                console.error('cart_get not found on load!');
+            }
+            loadMenu();
+            loadOrders();
+            updateCartUI();
+        });
 
         function switchTab(tab, element) {
             // Remove active class from all links
@@ -136,71 +156,103 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
             if (element) {
                 element.classList.add('active');
             } else {
-                // Find link by onclick attribute content if element is not provided (programmatic call)
                 const link = document.querySelector(`.nav-link[onclick*="'${tab}'"]`);
                 if (link) link.classList.add('active');
             }
 
+            const viewTitle = document.getElementById('view-title');
+            const cartBtn = document.getElementById('cart-btn');
+
             if (tab === 'orders') {
                 document.getElementById('view-menu').style.display = 'none';
                 document.getElementById('view-orders').style.display = 'block';
+                if (viewTitle) viewTitle.innerText = 'Order History';
+                if (cartBtn) cartBtn.style.display = 'none';
                 loadOrders();
             } else {
                 document.getElementById('view-menu').style.display = 'block';
                 document.getElementById('view-orders').style.display = 'none';
+                if (viewTitle) viewTitle.innerText = 'Delicious Menu';
+                if (cartBtn) cartBtn.style.display = 'block';
+                loadMenu(); // Explicitly re-load when switching back
             }
         }
 
         async function loadMenu() {
             try {
-                products = await apiCall('api/data.php?type=products');
+                const result = await apiCall('api/data.php?type=products&_t=' + Date.now());
+                products = Array.isArray(result) ? result : [];
                 const grid = document.getElementById('menu-grid');
-                grid.innerHTML = products.map(p => `
-                    <div class="card food-card">
-                        <img src="${p.image}" class="food-img" alt="${p.name}">
-                        <div style="padding: 10px;">
-                            <div class="flex-between">
-                                <div class="food-title">${p.name}</div>
-                                <div class="price">${formatCurrency(p.price)}</div>
-                            </div>
-                            <div class="food-desc">${p.description}</div>
-                            <button class="btn btn-primary btn-block mt-3" onclick="addToCart(${p.id})">
-                                <i class="fas fa-plus"></i> Add to Cart
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (e) { }
+                
+                if (!grid) {
+                    console.error('loadMenu: Grid element not found!');
+                    return;
+                }
+                if (!products || products.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+                            <p class="text-muted">No menu items available at the moment.</p>
+                            <button class="btn btn-secondary mt-3" onclick="loadMenu()"><i class="fas fa-sync"></i> Try Refreshing</button>
+                        </div>`;
+                } else {
+                    let html = '';
+                    products.forEach(p => {
+                        try {
+                            html += `
+                                <div class="card food-card fade-in">
+                                    <img src="${p.image || 'https://via.placeholder.com/400x300?text=Food'}" class="food-img" alt="${p.name || 'Food'}">
+                                    <div style="padding: 10px;">
+                                        <div class="flex-between">
+                                            <div class="food-title">${p.name || 'Unnamed Item'}</div>
+                                            <div class="price">${formatCurrency(p.price)}</div>
+                                        </div>
+                                        <div class="food-desc">${p.description || ''}</div>
+                                        <button class="btn btn-primary btn-block mt-3" onclick="addToCart(${p.id})">
+                                            <i class="fas fa-plus"></i> Add to Cart
+                                        </button>
+                                    </div>
+                                </div>`;
+                        } catch (err) {
+                            console.error("Error rendering product:", p, err);
+                        }
+                    });
+                    grid.innerHTML = html;
+                }
+            } catch (e) {
+                document.getElementById('menu-grid').innerHTML = 
+                    `<p class="text-danger text-center" style="grid-column: 1/-1;">Error loading menu: ${e.message}</p>`;
+            }
         }
 
+
         function addToCart(id) {
-            // Use loose comparison (==) to handle potential string/number mismatch
             const product = products.find(p => p.id == id);
-
-            if (!product) {
-                console.error('Product not found for ID:', id);
-                return;
-            }
-
-            const existing = cart.find(item => item.id == id);
-
-            if (existing) {
-                existing.quantity++;
-            } else {
-                // Ensure price is a number
-                const price = parseFloat(product.price);
-                cart.push({ ...product, price: price, quantity: 1 });
-            }
+            if (!product) return;
+            
+            // Use shared logic from main.js
+            window.cart_add(product);
+            
+            // Refresh local state
+            cart = window.cart_get();
             updateCartUI();
             toggleCart(true);
         }
+
+        // Shared saveCart is in main.js
 
         function updateCartUI() {
             const container = document.getElementById('cart-items');
             const countBadge = document.getElementById('cart-count');
             const totalEl = document.getElementById('cart-total');
 
-            countBadge.innerText = cart.reduce((acc, item) => acc + item.quantity, 0);
+            const totalCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+            
+            if (countBadge) {
+                countBadge.innerText = totalCount;
+                countBadge.classList.remove('pulse');
+                void countBadge.offsetWidth; // Trigger reflow
+                countBadge.classList.add('pulse');
+            }
 
             if (cart.length === 0) {
                 container.innerHTML = '<p class="text-muted text-center mt-5">Your cart is empty.</p>';
@@ -230,6 +282,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
         function removeFromCart(index) {
             cart.splice(index, 1);
             updateCartUI();
+            cart_save(cart);
         }
 
         function toggleCart(forceOpen = false) {
@@ -259,6 +312,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                 });
                 alert('Order placed successfully!');
                 cart = [];
+                cart_clear(); // Use shared cart_clear
                 updateCartUI();
                 toggleCart();
                 switchTab('orders');
@@ -271,24 +325,79 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 
         async function loadOrders() {
             const list = document.getElementById('orders-list');
+            const badge = document.getElementById('orders-count-badge');
             try {
                 const orders = await apiCall('api/data.php?type=orders');
-                list.innerHTML = orders.map(order => `
-                    <div class="card mb-3">
-                         <div class="flex-between">
-                            <div>
-                                <h4>Order #${order.id}</h4>
-                                <span class="badge badge-${order.status}">${order.status.toUpperCase()}</span>
-                                <p class="text-muted mt-2">${order.created_at}</p>
-                            </div>
-                            <div class="text-right">
-                     <h3>${formatCurrency(order.total_price)}</h3>
-                            </div>
-                         </div>
-                    </div>
-                `).join('');
-                if (orders.length === 0) list.innerHTML = '<p class="text-muted">No past orders.</p>';
-            } catch (e) { }
+                
+                if (badge) {
+                    badge.innerText = orders.length;
+                    badge.style.display = orders.length > 0 ? 'inline-block' : 'none';
+                }
+
+                if (orders.length === 0) {
+                    list.innerHTML = '<p class="text-muted">No past orders.</p>';
+                } else {
+                    list.innerHTML = orders.map(order => `
+                        <div class="card mb-3">
+                             <div class="flex-between">
+                                <div>
+                                    <h4>Order #${order.id}</h4>
+                                    <span class="badge badge-${order.status}">${order.status.toUpperCase()}</span>
+                                    <p class="text-muted mt-2">${order.created_at}</p>
+                                     ${(order.status !== 'delivered' && order.status !== 'rejected' && order.status !== 'pending') ? `
+                                         <div class="mt-2" style="display: flex; gap: 10px;">
+                                             <button class="btn btn-sm btn-success" onclick="confirmDelivery(${order.id})">
+                                                 <i class="fas fa-check-circle"></i> Confirm Receipt
+                                             </button>
+                                             <button class="btn btn-sm btn-danger" onclick="rejectOrder(${order.id})">
+                                                 <i class="fas fa-times-circle"></i> Reject Order
+                                             </button>
+                                         </div>
+                                     ` : ''}
+                                </div>
+                                <div class="text-right">
+                                    <h3>${formatCurrency(order.total_price)}</h3>
+                                    <p class="text-muted"><i class="fas fa-shopping-bag"></i> Item(s) recorded</p>
+                                </div>
+                             </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                list.innerHTML = `<p class="text-danger">Error loading orders: ${e.message}</p>`;
+            }
+        }
+
+        async function confirmDelivery(orderId) {
+            if (!confirm('Have you received your food? This will complete the order.')) return;
+            
+            try {
+                await apiCall('api/data.php?type=update_order', 'POST', {
+                    order_id: orderId,
+                    status: 'delivered'
+                });
+                alert('Order confirmed! Enjoy your meal.');
+                loadOrders(); // Refresh the list
+            } catch (e) {
+                alert('Failed to confirm delivery: ' + e.message);
+            }
+        }
+
+        async function rejectOrder(orderId) {
+            const reason = prompt('Please tell us why you are rejecting this order:');
+            if (reason === null) return; // Cancelled
+            if (!reason.trim()) return alert('A reason is required to reject an order.');
+            
+            try {
+                await apiCall('api/data.php?type=update_order', 'POST', {
+                    order_id: orderId,
+                    status: 'rejected'
+                });
+                alert('Order rejected. We are sorry for the inconvenience.');
+                loadOrders(); // Refresh the list
+            } catch (e) {
+                alert('Failed to reject order: ' + e.message);
+            }
         }
     </script>
 </body>

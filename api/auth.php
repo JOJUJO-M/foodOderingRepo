@@ -1,8 +1,8 @@
 <?php
 // api/auth.php
 ob_start();
-error_reporting(0);
-ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 session_start();
 header('Content-Type: application/json');
 $enable_json_errors = true; // Tell db.php to output JSON on error
@@ -42,12 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$name, $email, $hashed, $role]);
             ob_clean();
             echo json_encode(['success' => true, 'message' => 'Registration successful']);
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             http_response_code(400);
             ob_clean();
             echo json_encode(['success' => false, 'message' => 'Registration Error: ' . $e->getMessage()]);
         }
-    } elseif ($action === 'login') {
+    }
+    elseif ($action === 'login') {
         $email = $data['email'];
         $password = $data['password'];
 
@@ -60,14 +62,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Primary: verify hashed password
             if (password_verify($password, $user['password'])) {
                 $login_ok = true;
-            } elseif ($password === $user['password']) {
+            }
+            elseif ($password === $user['password']) {
                 // Legacy plaintext password stored — accept and upgrade to hashed
                 try {
                     $newHash = password_hash($password, PASSWORD_DEFAULT);
                     $upd = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
                     $upd->execute([$newHash, $user['id']]);
-                } catch (Exception $e) {
-                    // Ignore update failure, allow login if plaintext matched
+                }
+                catch (Exception $e) {
+                // Ignore update failure, allow login if plaintext matched
                 }
                 $login_ok = true;
             }
@@ -79,17 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['name'] = $user['name'];
             ob_clean();
             echo json_encode(['success' => true, 'role' => $user['role'], 'redirect' => "dashboard_{$user['role']}.php"]);
-        } else {
+        }
+        else {
             http_response_code(401);
             ob_clean();
             echo json_encode(['success' => false, 'message' => 'Invalid credentials']);
         }
-    } elseif ($action === 'logout') {
+    }
+    elseif ($action === 'logout') {
         session_destroy();
         ob_clean();
         echo json_encode(['success' => true]);
     }
-} elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
+}
+elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($action === 'current_user') {
         if (isset($_SESSION['user_id'])) {
             ob_clean();
@@ -98,11 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role' => $_SESSION['role'],
                 'name' => $_SESSION['name']
             ]);
-        } else {
+        }
+        else {
             http_response_code(401);
             ob_clean();
             echo json_encode(['error' => 'Not logged in']);
         }
     }
 }
-

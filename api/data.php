@@ -1,12 +1,14 @@
 <?php
 // api/data.php
 ob_start();
-error_reporting(0);
-ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 header('Content-Type: application/json');
 session_start();
+session_write_close(); // Prevent session locking for GET requests
 $enable_json_errors = true;
 require_once '../db.php';
+file_put_contents('../debug.log', date('[Y-m-d H:i:s] ') . "API Call: " . $_SERVER['REQUEST_URI'] . " Session: " . json_encode($_SESSION) . "\n", FILE_APPEND);
 
 if (isset($db_error)) {
     http_response_code(500);
@@ -21,23 +23,29 @@ $type = $_GET['type'] ?? '';
 
 if ($method === 'GET' && $type === 'products') {
     $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
-    ob_clean();
-    echo json_encode($stmt->fetchAll());
+    $result = $stmt->fetchAll();
+    if (ob_get_length())
+        ob_clean();
+    echo json_encode($result);
     exit;
 }
 
 // Auth check
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    ob_clean();
+    if (ob_get_length())
+        ob_clean();
     die(json_encode(['error' => 'Unauthorized']));
 }
 
 if ($method === 'GET') {
     if ($type === 'products') {
         $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
-        ob_clean();
-        echo json_encode($stmt->fetchAll());
+        $result = $stmt->fetchAll();
+        if (ob_get_length())
+            ob_clean();
+        echo json_encode($result);
+        exit;
     }
     elseif ($type === 'orders') {
         $role = $_SESSION['role'];
@@ -352,11 +360,30 @@ elseif ($method === 'POST') {
 
         // Validation
         if ($_SESSION['role'] === 'customer') {
-            http_response_code(401);
-            ob_clean();
-            echo json_encode(['error' => 'Unauthorized']);
-            error_log('[UPDATE_ORDER] Customer tried to update order');
-            exit;
+            if ($status !== 'delivered' && $status !== 'rejected') {
+                http_response_code(403);
+                ob_clean();
+                die(json_encode(['error' => 'Customers can only confirm delivery or reject orders']));
+            }
+            try {
+                $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ? AND customer_id = ?");
+                $stmt->execute([$status, $orderId, $_SESSION['user_id']]);
+                if ($stmt->rowCount() > 0) {
+                    ob_clean();
+                    echo json_encode(['success' => true, 'message' => 'Order updated successfully']);
+                    exit;
+                }
+                else {
+                    http_response_code(404);
+                    ob_clean();
+                    die(json_encode(['error' => 'Order not found or already processed']));
+                }
+            }
+            catch (PDOException $e) {
+                http_response_code(500);
+                ob_clean();
+                die(json_encode(['error' => 'Database error']));
+            }
         }
 
         if ($_SESSION['role'] === 'rider') {

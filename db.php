@@ -1,19 +1,20 @@
 <?php
 // db.php - MySQL Database Connection & Initialization
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Database Configuration
 $host = 'localhost';
-$dbname = 'food_delivery';
-$username = 'fooduser';
-$password = 'Jojujo@2020*()';
+$dbname = 'food_ordering';
+$username = 'root';
+$password = '';
 
 try {
     // First connect to MySQL server to ensure DB exists
     $pdo = new PDO("mysql:host=$host", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname`");
-    
+
     // Now connect to the specific database
     $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -77,7 +78,8 @@ try {
         $stmt->execute(['Admin User', 'admin@food.com', $pass, 'admin']);
     }
 
-} catch (PDOException $e) {
+}
+catch (PDOException $e) {
     if (isset($enable_json_errors) && $enable_json_errors) {
         http_response_code(500);
         die(json_encode(['success' => false, 'message' => "Database Connection Error: " . $e->getMessage()]));
@@ -85,4 +87,3 @@ try {
     // Fallback for non-API context
     $db_error = $e->getMessage();
 }
-

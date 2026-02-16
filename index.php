@@ -249,6 +249,9 @@
         </a>
         <div class="nav-links">
             <?php if (isset($_SESSION['user_id'])): ?>
+            <a href="dashboard_customer.php" class="btn-login" style="background: var(--secondary);">
+                <i class="fas fa-shopping-cart"></i> Cart <span id="cart-count">0</span>
+            </a>
             <a href="dashboard_<?php echo $_SESSION['role']; ?>.php" class="btn-login">Dashboard</a>
             <?php
 else: ?>
@@ -287,7 +290,9 @@ endif; ?>
         </div>
     </footer>
 
-    <script src="assets/js/main.js"></script>
+    <!-- FontAwesome for cart icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="assets/js/main.js?v=<?php echo time(); ?>"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             await loadProducts();
@@ -308,7 +313,7 @@ endif; ?>
                                 <div class="food-desc">${product.description || 'Tasty and delicious food prepared with fresh ingredients.'}</div>
                                 <div class="food-footer">
                                     <div class="food-price">Tsh ${product.price}</div>
-                                    <button class="btn-order" onclick="handleOrder()">Order Now</button>
+                                    <button class="btn-order" onclick="handleOrder(${JSON.stringify(product).replace(/"/g, '&quot;')})">Order Now</button>
                                 </div>
                             </div>
                         </div>
@@ -322,11 +327,15 @@ endif; ?>
             }
         }
 
-        function handleOrder() {
-            // Check if user is logged in (session check is on server, but we can check if button text is Dashboard)
+        function handleOrder(product) {
+            // Check if user is logged in
             const isLoggedIn = <?php echo isset($_SESSION['user_id']) ? 'true' : 'false'; ?>;
 
             if (isLoggedIn) {
+                // Add to shared cart
+                cart_add(product);
+                updateGlobalCartCount();
+                // Redirect to dashboard where they can see the cart
                 window.location.href = 'dashboard_customer.php';
             } else {
                 alert('Please login to place an order.');

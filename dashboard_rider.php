@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'rider') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rider Dashboard</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
@@ -20,12 +20,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'rider') {
     <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <a href="index.php" class="brand"
-                style="text-decoration: none; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); border-radius: 12px; margin-bottom: 10px;">
+            <a href="index.php" class="brand">
                 <div style="display: flex; flex-direction: column; text-align: center;">
                     <span style="font-size: 24px; font-weight: 700; color: white; letter-spacing: 1px;">MISOSI</span>
-                    <span style="font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500;">Rider
-                        Dashboard</span>
+                    <span style="font-size: 11px; color: rgba(255,255,255,0.8); font-weight: 500;">Rider Dashboard</span>
                 </div>
             </a>
             <nav>
@@ -78,51 +76,53 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'rider') {
                 const orders = data.orders;
 
                 reportDiv.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                        <div class="card" style="border-top: 4px solid #667eea;">
-                            <h3 style="color: #667eea; margin: 0 0 10px 0;">📦 Total Orders</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #333;">${summary.total_orders || 0}</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
+                        <div class="card" style="border-top: 4px solid #667eea; padding: 15px;">
+                            <h4 style="color: #667eea; margin: 0 0 5px 0; font-size: 0.9rem;">📦 Total</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">${summary.total_orders || 0}</div>
                         </div>
-                        <div class="card" style="border-top: 4px solid #3498db;">
-                            <h3 style="color: #3498db; margin: 0 0 10px 0;">🔄 Accepted</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #333;">${summary.in_delivery || 0}</div>
+                        <div class="card" style="border-top: 4px solid #3498db; padding: 15px;">
+                            <h4 style="color: #3498db; margin: 0 0 5px 0; font-size: 0.9rem;">🔄 Accepted</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">${summary.in_delivery || 0}</div>
                         </div>
-                        <div class="card" style="border-top: 4px solid #FFA500;">
-                            <h3 style="color: #FFA500; margin: 0 0 10px 0;">⏳ Waiting Acceptance</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #333;">${summary.waiting_pickup || 0}</div>
+                        <div class="card" style="border-top: 4px solid #FFA500; padding: 15px;">
+                            <h4 style="color: #FFA500; margin: 0 0 5px 0; font-size: 0.9rem;">⏳ Pending</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">${summary.waiting_pickup || 0}</div>
                         </div>
-                        <div class="card" style="border-top: 4px solid #00b894;">
-                            <h3 style="color: #00b894; margin: 0 0 10px 0;">✅ Completed</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #333;">${summary.completed || 0}</div>
+                        <div class="card" style="border-top: 4px solid #00b894; padding: 15px;">
+                            <h4 style="color: #00b894; margin: 0 0 5px 0; font-size: 0.9rem;">✅ Done</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">${summary.completed || 0}</div>
                         </div>
-                        <div class="card" style="border-top: 4px solid #e74c3c;">
-                            <h3 style="color: #e74c3c; margin: 0 0 10px 0;">❌ Rejected</h3>
-                            <div style="font-size: 32px; font-weight: bold; color: #333;">${summary.rejected || 0}</div>
+                        <div class="card" style="border-top: 4px solid #e74c3c; padding: 15px;">
+                            <h4 style="color: #e74c3c; margin: 0 0 5px 0; font-size: 0.9rem;">❌ Rejected</h4>
+                            <div style="font-size: 24px; font-weight: bold; color: #333;">${summary.rejected || 0}</div>
                         </div>
                     </div>
                     
-                    <div class="card mt-4">
-                        <h3>📋 Orders & Customers</h3>
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                            <thead>
-                                <tr style="background: #f5f5f5; border-bottom: 2px solid #ddd;">
-                                    <th style="padding: 10px; text-align: left;">Order ID</th>
-                                    <th style="padding: 10px; text-align: left;">Customer Name</th>
-                                    <th style="padding: 10px; text-align: left;">Status</th>
-                                    <th style="padding: 10px; text-align: left;">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${orders.map(o => `
-                                    <tr style="border-bottom: 1px solid #eee;">
-                                        <td style="padding: 10px;"><strong>#${o.id}</strong></td>
-                                        <td style="padding: 10px;">${o.customer_name}</td>
-                                        <td style="padding: 10px;"><span class="badge badge-${o.status}">${o.status.toUpperCase().replace('_', ' ')}</span></td>
-                                        <td style="padding: 10px; color: #667eea; font-weight: bold;">${formatCurrency(o.total_price)}</td>
+                    <div class="card mt-4 p-0 overflow-hidden">
+                        <div style="padding: 20px 20px 0;"><h3 style="margin:0;">📋 Orders Overview</h3></div>
+                        <div class="table-responsive">
+                            <table class="table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                                <thead>
+                                    <tr style="background: rgba(0,0,0,0.02); border-bottom: 2px solid #ddd;">
+                                        <th style="padding: 12px; text-align: left;">Order</th>
+                                        <th style="padding: 12px; text-align: left;">Customer</th>
+                                        <th style="padding: 12px; text-align: left;">Status</th>
+                                        <th style="padding: 12px; text-align: left;">Amount</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${orders.map(o => `
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 12px;"><strong>#${o.id}</strong></td>
+                                            <td style="padding: 12px;">${o.customer_name}</td>
+                                            <td style="padding: 12px;"><span class="badge badge-${o.status}">${o.status.toUpperCase().replace('_', ' ')}</span></td>
+                                            <td style="padding: 12px; color: var(--primary); font-weight: bold;">${formatCurrency(o.total_price)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
             } catch (e) {

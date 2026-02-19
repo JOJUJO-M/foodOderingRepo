@@ -5,9 +5,9 @@ ini_set('display_errors', 1);
 
 // Database Configuration
 $host = 'localhost';
-$dbname = 'food_delivery';
-$username = 'fooduser';
-$password = 'Jojujo@2020*()';
+$dbname = 'food_ordering';
+$username = 'root';
+$password = '';
 
 try {
     // First connect to MySQL server to ensure DB exists
@@ -67,6 +67,14 @@ try {
 
     foreach ($commands as $command) {
         $pdo->exec($command);
+    }
+
+    // Migration: Add customer_feedback column to orders table if it doesn't exist
+    try {
+        $pdo->exec("ALTER TABLE orders ADD COLUMN customer_feedback TEXT DEFAULT NULL");
+    }
+    catch (PDOException $e) {
+    // Ignore "Duplicate column" error
     }
 
     // Seed default admin if none exists

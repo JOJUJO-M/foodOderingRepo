@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Misosi Kiganjani - Premium Food Delivery</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.1">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -237,6 +237,51 @@
 
         .delay-2 {
             animation-delay: 0.4s;
+        }
+
+        @media screen and (max-width: 768px) {
+            .navbar {
+                padding: 0.8rem 1rem;
+            }
+            .hero h1 {
+                font-size: 2.2rem;
+                margin-top: 20px;
+            }
+            .hero p {
+                font-size: 1rem;
+            }
+            .nav-links {
+                gap: 10px;
+            }
+            .btn-login {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            .section-title h2 {
+                font-size: 1.8rem;
+            }
+            .food-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 15px;
+            }
+            .menu-section {
+                padding: 2rem 1rem;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .logo span {
+                font-size: 1.2rem;
+            }
+            .logo {
+                font-size: 1.1rem;
+            }
+            .food-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>

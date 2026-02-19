@@ -366,8 +366,9 @@ elseif ($method === 'POST') {
                 die(json_encode(['error' => 'Customers can only confirm delivery or reject orders']));
             }
             try {
-                $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ? AND customer_id = ?");
-                $stmt->execute([$status, $orderId, $_SESSION['user_id']]);
+                $feedback = $data['feedback'] ?? null;
+                $stmt = $pdo->prepare("UPDATE orders SET status = ?, customer_feedback = ? WHERE id = ? AND customer_id = ?");
+                $stmt->execute([$status, $feedback, $orderId, $_SESSION['user_id']]);
                 if ($stmt->rowCount() > 0) {
                     ob_clean();
                     echo json_encode(['success' => true, 'message' => 'Order updated successfully']);
@@ -382,7 +383,7 @@ elseif ($method === 'POST') {
             catch (PDOException $e) {
                 http_response_code(500);
                 ob_clean();
-                die(json_encode(['error' => 'Database error']));
+                die(json_encode(['error' => 'Database error: ' . $e->getMessage()]));
             }
         }
 
@@ -453,6 +454,44 @@ elseif ($method === 'POST') {
                 ob_clean();
                 echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
             }
+        }
+    }
+    elseif ($type === 'delete_order' && $_SESSION['role'] === 'admin') {
+        $orderId = $data['order_id'];
+        if (!$orderId) {
+            http_response_code(400);
+            ob_clean();
+            die(json_encode(['success' => false, 'message' => 'Order ID is required']));
+        }
+
+        try {
+            // Check status first to ensure it's delivered or rejected
+            $stmt = $pdo->prepare("SELECT status FROM orders WHERE id = ?");
+            $stmt->execute([$orderId]);
+            $order = $stmt->fetch();
+
+            if (!$order) {
+                http_response_code(404);
+                ob_clean();
+                die(json_encode(['success' => false, 'message' => 'Order not found']));
+            }
+
+            if ($order['status'] !== 'delivered' && $order['status'] !== 'rejected') {
+                http_response_code(403);
+                ob_clean();
+                die(json_encode(['success' => false, 'message' => 'Only delivered or rejected orders can be deleted']));
+            }
+
+            $stmt = $pdo->prepare("DELETE FROM orders WHERE id = ?");
+            $stmt->execute([$orderId]);
+
+            ob_clean();
+            echo json_encode(['success' => true, 'message' => 'Order deleted successfully']);
+        }
+        catch (PDOException $e) {
+            http_response_code(500);
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
         }
     }
     elseif ($type === 'accept_order') {

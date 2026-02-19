@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.1">
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -50,12 +50,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
                 <p class="text-muted">Manage and assign orders to riders</p>
             </div>
             <div id="header-products" class="mb-4" style="display:none;">
-                <div class="flex-between">
-                    <div style="text-align: center; flex: 1;">
+                <div class="flex-between" style="flex-wrap: wrap; gap: 15px;">
+                    <div style="flex: 1; min-width: 200px; text-align: center;">
                         <h1>Menu Management</h1>
                         <p class="text-muted">Add or remove food items</p>
                     </div>
-                    <button class="btn btn-primary" onclick="showAddProductModal()">
+                    <button class="btn btn-primary" onclick="showAddProductModal()" style="min-width: 180px;">
                         <i class="fas fa-plus"></i> Add New Item
                     </button>
                 </div>
@@ -67,12 +67,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             </div>
 
             <div id="header-users" class="mb-4" style="display:none;">
-                <div class="flex-between">
-                    <div style="text-align: center; flex: 1;">
+                <div class="flex-between" style="flex-wrap: wrap; gap: 15px;">
+                    <div style="flex: 1; min-width: 200px; text-align: center;">
                         <h1>User Management</h1>
                         <p class="text-muted">Register and manage riders/admins</p>
                     </div>
-                    <button class="btn btn-primary" onclick="showUserModal()">
+                    <button class="btn btn-primary" onclick="showUserModal()" style="min-width: 180px;">
                         <i class="fas fa-user-plus"></i> Register New User
                     </button>
                 </div>
@@ -80,6 +80,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
             <!-- Content Areas -->
             <div id="view-orders">
+                <div class="flex-center mb-4" style="gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary active status-filter" onclick="filterOrders('all', this)">All</button>
+                    <button class="btn btn-secondary status-filter" onclick="filterOrders('pending', this)">Pending</button>
+                    <button class="btn btn-secondary status-filter" onclick="filterOrders('accepted', this)">Ongoing</button>
+                    <button class="btn btn-secondary status-filter" onclick="filterOrders('delivered', this)">Completed</button>
+                    <button class="btn btn-secondary status-filter" onclick="filterOrders('rejected', this)">Rejected</button>
+                </div>
                 <div id="orders-list">
                     <!-- Loaded via JS -->
                     <div class="text-center p-5">Loading orders...</div>
@@ -106,19 +113,21 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
 
             <div id="view-users" style="display:none;">
                 <div class="card p-0 overflow-hidden">
-                    <table class="table" style="width: 100%; border-collapse: collapse;">
-                        <thead style="background: rgba(0,0,0,0.05); text-align: left;">
-                            <tr>
-                                <th style="padding: 15px;">Name</th>
-                                <th style="padding: 15px;">Email</th>
-                                <th style="padding: 15px;">Role</th>
-                                <th style="padding: 15px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body">
-                            <!-- Loaded via JS -->
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="table" style="width: 100%; border-collapse: collapse;">
+                            <thead style="background: rgba(0,0,0,0.05); text-align: left;">
+                                <tr>
+                                    <th style="padding: 15px;">Name</th>
+                                    <th style="padding: 15px;">Email</th>
+                                    <th style="padding: 15px;">Role</th>
+                                    <th style="padding: 15px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
@@ -319,50 +328,161 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             riders = await apiCall('api/data.php?type=riders');
         }
 
+        let allOrders = [];
+        let currentFilter = 'all';
+
         async function loadOrders() {
             const list = document.getElementById('orders-list');
             try {
-                const orders = await apiCall('api/data.php?type=orders');
-                list.innerHTML = orders.map(order => `
-                    <div class="card mb-4 fade-in">
-                        <div style="margin-bottom: 20px;">
-                            <h2 style="font-size: 1.5rem; margin-bottom: 10px;">Order #${order.id}</h2>
-                            <p class="text-muted" style="margin-bottom: 10px; font-size: 1.1rem;">Customer: ${order.customer_name} | ${new Date(order.created_at).toLocaleString()}</p>
-                            <p style="font-size: 1.3rem; margin-bottom: 15px;"><strong>Total: ${formatCurrency(order.total_price)}</strong></p>
-                            <div style="margin-bottom: 20px;">
-                                <span class="badge badge-${order.status}">${order.status.toUpperCase()}</span>
-                            </div>
-                        </div>
-                        <div style="padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05);">
-                            ${renderOrderActions(order)}
-                        </div>
-                    </div>
-                `).join('');
-                if (orders.length === 0) list.innerHTML = '<p class="text-center text-muted">No orders found.</p>';
+                allOrders = await apiCall('api/data.php?type=orders');
+                renderOrders();
             } catch (e) {
                 list.innerHTML = '<p class="text-danger">Failed to load orders.</p>';
             }
+        }
+
+        function filterOrders(status, el) {
+            currentFilter = status;
+            document.querySelectorAll('.status-filter').forEach(btn => btn.classList.remove('btn-primary'));
+            document.querySelectorAll('.status-filter').forEach(btn => btn.classList.add('btn-secondary'));
+            el.classList.remove('btn-secondary');
+            el.classList.add('btn-primary');
+            renderOrders();
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('orders-list');
+            const filtered = currentFilter === 'all' 
+                ? allOrders 
+                : allOrders.filter(o => o.status === currentFilter);
+
+            list.innerHTML = filtered.map(order => `
+                <div class="card mb-4 fade-in">
+                    <div class="flex-between" style="align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <h2 style="font-size: 1.3rem; margin-bottom: 5px;">Order #${order.id}</h2>
+                            <p class="text-muted" style="font-size: 0.9rem;">
+                                <i class="fas fa-user"></i> ${order.customer_name} | 
+                                <i class="fas fa-clock"></i> ${new Date(order.created_at).toLocaleString()}
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge badge-${order.status}" style="font-size: 0.8rem;">${order.status.toUpperCase()}</span>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: var(--primary); margin-top: 5px;">
+                                ${formatCurrency(order.total_price)}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="items-${order.id}" class="mt-3 mb-3 p-3" style="background: rgba(0,0,0,0.02); border-radius: 8px; display: none;">
+                        <p class="text-muted"><i class="fas fa-spinner fa-spin"></i> Loading items...</p>
+                    </div>
+
+                    <div class="flex-between mt-3" style="padding-top: 15px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <button class="btn btn-secondary btn-sm" onclick="toggleOrderItems(${order.id}, this)">
+                            <i class="fas fa-eye"></i> Show Items
+                        </button>
+                        ${renderOrderActions(order)}
+                    </div>
+                </div>
+            `).join('');
+
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="text-center p-5 text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No ${currentFilter === 'all' ? '' : currentFilter} orders found.</p>
+                </div>`;
+            }
+        }
+
+        async function toggleOrderItems(orderId, btn) {
+            const container = document.getElementById(`items-${orderId}`);
+            const order = allOrders.find(o => o.id == orderId);
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                btn.innerHTML = '<i class="fas fa-eye"></i> Show Items';
+            } else {
+                container.style.display = 'block';
+                btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Items';
+                
+                if (container.innerHTML.includes('Loading items...')) {
+                    try {
+                        const items = await apiCall(`api/data.php?type=order_items&order_id=${orderId}`);
+                        container.innerHTML = `
+                            <div class="table-responsive">
+                                <table style="width: 100%; font-size: 0.9rem;">
+                                    <thead>
+                                        <tr style="text-align: left; border-bottom: 1px solid #ddd;">
+                                            <th style="padding: 5px;">Item</th>
+                                            <th style="padding: 5px;">Qty</th>
+                                            <th style="padding: 5px; text-align: right;">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${items.map(item => `
+                                            <tr>
+                                                <td style="padding: 5px;">${item.name}</td>
+                                                <td style="padding: 5px;">x${item.quantity}</td>
+                                                <td style="padding: 5px; text-align: right;">${formatCurrency(item.price * item.quantity)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-2 text-muted" style="font-size: 0.8rem; border-top: 1px dashed #ddd; padding-top: 5px;">
+                                <i class="fas fa-map-marker-alt"></i> Delivery Address: ${order.delivery_address}
+                            </div>
+                            <div class="mt-2 text-info" style="font-size: 0.9rem; border-top: 1px dashed #ddd; padding-top: 5px; font-style: italic;">
+                                <i class="fas fa-comment-dots"></i> Customer Response: ${order.customer_feedback || 'No response yet'}
+                            </div>
+                        `;
+                    } catch (e) {
+                        container.innerHTML = '<p class="text-danger">Error loading items.</p>';
+                    }
+                }
+            }
+        }
+
+        async function deleteOrder(id) {
+            if (!confirm('⚠️ Are you sure you want to permanently delete this order record? This cannot be undone.')) return;
+            try {
+                const res = await apiCall('api/data.php?type=delete_order', 'POST', { order_id: id });
+                if (res.success) {
+                    alert('Order deleted successfully');
+                    loadOrders();
+                }
+            } catch (err) {}
         }
 
         function renderOrderActions(order) {
             if (order.status === 'pending') {
                 return `
                      <div style="display: flex; gap: 10px; align-items: center;">
-                         <select id="rider-select-${order.id}" class="form-control" style="width: 200px;">
-                             <option value="">Choose Rider...</option>
+                         <select id="rider-select-${order.id}" class="form-control" style="width: 160px; height: 38px;">
+                             <option value="">Assign Rider...</option>
                              ${riders.map(r => `<option value="${r.id}">${r.name}</option>`).join('')}
                          </select>
-                         <button class="btn btn-primary" onclick="assignOrder(${order.id})" style="padding: 10px 25px;">Assign & Accept</button>
-                         <button class="btn btn-secondary" onclick="rejectOrder(${order.id})" style="color: #ff4757; border-color: #fed7d7;">Reject</button>
+                         <button class="btn btn-primary btn-sm" onclick="assignOrder(${order.id})">Accept & Assign</button>
+                         <button class="btn btn-danger btn-sm" onclick="rejectOrder(${order.id})">Reject</button>
                      </div>
                  `;
             } if (order.status === 'rejected') {
-                return '<button class="btn btn-secondary" style="background:#fed7d7; color:#822727; border:none;" disabled>Order Rejected</button>';
+                return `
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="text-danger"><i class="fas fa-times-circle"></i> Rejected</span>
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${order.id})" title="Delete Record"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
             } if (order.status === 'delivered') {
-                return '<button class="btn btn-secondary" disabled style="padding: 15px 40px; font-size: 1.1rem; width: fit-content;">Completed</button>';
+                return `
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span class="text-success"><i class="fas fa-check-circle"></i> Completed</span>
+                        <button class="btn btn-danger btn-sm" onclick="deleteOrder(${order.id})" title="Delete Record"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
             }
             else {
-                return `<div class="btn btn-secondary" disabled><i class="fas fa-truck"></i> Assigned: ${order.rider_name || 'Rider'}</div>`;
+                return `<div class="text-primary"><i class="fas fa-truck"></i> Assigned: ${order.rider_name || 'Rider'}</div>`;
             }
         }
 
@@ -370,21 +490,27 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
             const riderId = document.getElementById(`rider-select-${id}`).value;
             if (!riderId) return alert('Please select a rider first');
 
-            await apiCall('api/data.php?type=update_order', 'POST', {
-                order_id: id,
-                status: 'accepted',
-                rider_id: riderId
-            });
-            loadOrders();
+            try {
+                await apiCall('api/data.php?type=update_order', 'POST', {
+                    order_id: id,
+                    status: 'accepted',
+                    rider_id: riderId
+                });
+                alert('Order accepted and assigned!');
+                loadOrders();
+            } catch (err) {}
         }
 
         async function rejectOrder(id) {
             if (!confirm('Are you sure you want to reject this order?')) return;
-            await apiCall('api/data.php?type=update_order', 'POST', {
-                order_id: id,
-                status: 'rejected'
-            });
-            loadOrders();
+            try {
+                await apiCall('api/data.php?type=update_order', 'POST', {
+                    order_id: id,
+                    status: 'rejected'
+                });
+                alert('Order rejected');
+                loadOrders();
+            } catch (err) {}
         }
 
         async function loadProducts() {

@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gourmet Delivery - Home</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .cart-panel {
@@ -21,12 +21,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
             top: 0;
             bottom: 0;
             width: 400px;
+            max-width: 90%;
             background: white;
             box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
             transform: translateX(100%);
             transition: transform 0.3s ease;
-            z-index: 1000;
-            padding: 30px;
+            z-index: 2000;
+            padding: 20px;
             display: flex;
             flex-direction: column;
         }
@@ -82,9 +83,9 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="mb-5" style="position: relative; display: flex; justify-content: center; align-items: center; min-height: 60px;">
-                <h1 id="view-title" style="margin-bottom: 0; text-align: center;">Delicious Menu</h1>
-                <button id="cart-btn" class="btn btn-primary" onclick="toggleCart()" style="position: absolute; right: 0;">
+            <div class="flex-between mb-5" style="gap: 15px; flex-wrap: wrap; text-align: center;">
+                <h1 id="view-title" style="margin: 0; flex: 1; min-width: 200px;">Delicious Menu</h1>
+                <button id="cart-btn" class="btn btn-primary" onclick="toggleCart()" style="min-width: 120px;">
                     <i class="fas fa-shopping-cart"></i> Cart <span id="cart-count" class="badge badge-pending"
                         style="background: white; color: var(--primary); margin-left: 5px;">0</span>
                 </button>
@@ -344,11 +345,13 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
                                     <h4>Order #${order.id}</h4>
                                     <span class="badge badge-${order.status}">${order.status.toUpperCase()}</span>
                                     <p class="text-muted mt-2">${order.created_at}</p>
-                                     ${(order.status !== 'delivered' && order.status !== 'rejected' && order.status !== 'pending') ? `
-                                         <div class="mt-2" style="display: flex; gap: 10px;">
-                                             <button class="btn btn-sm btn-success" onclick="confirmDelivery(${order.id})">
-                                                 <i class="fas fa-check-circle"></i> Confirm Receipt
-                                             </button>
+                                     ${(order.status !== 'delivered' && order.status !== 'rejected') ? `
+                                         <div class="mt-2" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                             ${(order.status === 'picked_up') ? `
+                                                 <button class="btn btn-sm btn-success" onclick="confirmDelivery(${order.id})">
+                                                     <i class="fas fa-check-circle"></i> Confirm Receipt
+                                                 </button>
+                                             ` : ''}
                                              <button class="btn btn-sm btn-danger" onclick="rejectOrder(${order.id})">
                                                  <i class="fas fa-times-circle"></i> Reject Order
                                              </button>
@@ -369,12 +372,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
         }
 
         async function confirmDelivery(orderId) {
-            if (!confirm('Have you received your food? This will complete the order.')) return;
+            const feedback = prompt('Glad you received your food! Any feedback for us? (Optional)');
+            if (feedback === null) return; // Cancelled the whole action
             
             try {
                 await apiCall('api/data.php?type=update_order', 'POST', {
                     order_id: orderId,
-                    status: 'delivered'
+                    status: 'delivered',
+                    feedback: feedback.trim() || 'Food received successfully'
                 });
                 alert('Order confirmed! Enjoy your meal.');
                 loadOrders(); // Refresh the list
@@ -391,7 +396,8 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'customer') {
             try {
                 await apiCall('api/data.php?type=update_order', 'POST', {
                     order_id: orderId,
-                    status: 'rejected'
+                    status: 'rejected',
+                    feedback: 'REJECTED: ' + reason.trim()
                 });
                 alert('Order rejected. We are sorry for the inconvenience.');
                 loadOrders(); // Refresh the list

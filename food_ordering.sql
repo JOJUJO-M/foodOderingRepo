@@ -56,6 +56,7 @@ CREATE TABLE `orders` (
   `status` varchar(50) NOT NULL DEFAULT 'pending',
   `total_price` decimal(10,2) NOT NULL,
   `delivery_address` text DEFAULT NULL,
+  `customer_feedback` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

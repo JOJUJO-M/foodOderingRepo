@@ -131,6 +131,7 @@ h2 {
     width: 100%;
     max-width: 450px;
     text-align: center;
+    transition: all 0.3s ease;
 }
 
 /* Forms */
@@ -448,163 +449,235 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 }
 
 /* --- Responsive & Mobile Styles --- */
 @media screen and (max-width: 1024px) {
     .dashboard {
-        grid-template-columns: 200px 1fr;
+        grid-template-columns: 220px 1fr;
     }
 
     h1 {
-        font-size: 2.8rem;
+        font-size: 2.5rem;
     }
 
     .card {
-        padding: 30px;
+        padding: 25px;
     }
 }
 
 @media screen and (max-width: 768px) {
     .dashboard {
-        display: block;
-        /* Stack layout */
+        display: flex;
+        flex-direction: column;
     }
 
     .sidebar {
-        width: 100%;
-        padding: 15px;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        overflow-x: auto;
-        border-right: none;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        position: sticky;
-        top: 0;
-        z-index: 100;
+        width: 100% !important;
+        height: auto !important;
+        padding: 5px 10px !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 1000 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+        background: white !important;
     }
 
     .brand {
-        margin-bottom: 0px;
-        font-size: 1.2rem;
+        margin-bottom: 0px !important;
+        padding: 8px 12px !important;
+        font-size: 1.1rem !important;
+        gap: 8px !important;
+        background: none !important;
+        /* Remove the heavy gradient on mobile */
+        color: var(--primary) !important;
+    }
+
+    .brand div {
+        flex-direction: row !important;
+        gap: 5px;
+    }
+
+    .brand span:last-child {
+        display: none !important;
+        /* Hide "Admin Panel" subtext */
+    }
+
+    .brand span:first-child {
+        font-size: 18px !important;
+        color: var(--primary) !important;
+    }
+
+    .brand i {
+        font-size: 1.3rem !important;
     }
 
     .sidebar nav {
-        display: flex;
-        gap: 10px;
+        display: flex !important;
+        gap: 5px !important;
+        overflow-x: auto !important;
+        padding: 5px 0 !important;
+        -webkit-overflow-scrolling: touch;
     }
 
     .nav-link {
-        margin-bottom: 0;
-        padding: 8px 12px;
-        font-size: 0.9rem;
-        white-space: nowrap;
-    }
-
-    .nav-link i {
-        display: none;
-        /* Hide icons on mobile for space */
+        margin-bottom: 0 !important;
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        white-space: nowrap !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
     }
 
     .main-content {
-        padding: 20px;
+        padding: 20px 15px;
         margin-top: 0;
     }
 
     h1 {
-        font-size: 2rem;
+        font-size: 1.8rem;
+        letter-spacing: -1px;
     }
 
     h2 {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 
     .main-content p.text-muted {
         font-size: 1rem;
-        margin-bottom: 30px;
+        margin-bottom: 25px;
     }
 
     .menu-grid {
-        grid-template-columns: 1fr;
-        /* 1 column on mobile */
-    }
-
-    .flex-between {
-        flex-direction: column;
-        align-items: flex-start;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 15px;
     }
 
-    .flex-between button,
-    .flex-between .btn {
-        width: 100%;
+    .flex-between {
+        flex-direction: row;
+        /* Keep row unless really tight */
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .flex-between>* {
+        flex: 1 1 auto;
     }
 
     .card {
         padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
     }
 
-    /* Responsive Table (Horizontal Scroll) */
-    .card.p-0.overflow-hidden {
+    .table-responsive {
+        width: 100%;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .table {
         min-width: 600px;
-        /* Force scroll */
+    }
+
+    /* Modal adjustments */
+    .glass-panel {
+        padding: 25px 20px;
+        margin: 10px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    body {
+        overflow-x: hidden;
+        width: 100%;
+        position: relative;
+    }
+
+    .dashboard {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+    }
+
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10000 !important;
+        flex-direction: row !important;
+        padding: 10px !important;
+        overflow-x: hidden;
+    }
+
+    .main-content {
+        width: 100% !important;
+        padding: 15px !important;
+        overflow-x: hidden;
+    }
+
+    /* Prevent tables from breaking layout */
+    .card {
+        max-width: 100% !important;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Force grids to stack if they don't have auto-fill */
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr !important;
     }
 }
 
 @media screen and (max-width: 480px) {
     h1 {
-        font-size: 1.8rem;
+        font-size: 1.6rem !important;
     }
 
-    .auth-container {
-        padding: 10px;
-    }
-
-    .glass-panel {
-        padding: 25px;
-    }
-
-    .btn {
-        width: 100%;
-        /* Full width buttons */
-        margin-bottom: 10px;
-    }
-
-    .sidebar nav {
-        display: none;
-        /* Hide nav initially or use hamburger menu - simple toggle required */
-    }
-
-    /* Simple mobile nav tweak: show icons only if space is tight */
-    .sidebar {
-        display: block;
-        text-align: center;
-    }
-
-    .sidebar nav {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-top: 10px;
-    }
-
-    .nav-link {
-        padding: 10px;
+    h2 {
+        font-size: 1.4rem !important;
     }
 
     .nav-link span {
-        display: none;
-        /* Hide text */
+        display: none !important;
+    }
+
+    .nav-link {
+        padding: 10px !important;
     }
 
     .nav-link i {
-        display: inline-block;
-        /* Show icons */
-        font-size: 1.2rem;
+        font-size: 1.4rem !important;
+        margin: 0 !important;
+    }
+
+    .sidebar nav {
+        justify-content: center !important;
+        gap: 15px !important;
     }
 }
